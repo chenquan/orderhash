@@ -24,17 +24,25 @@ func Hash64(hashFunc func(b []byte) uint64) func(b []byte) uint64 {
 	rw := &sync.RWMutex{}
 	return func(b []byte) uint64 {
 		hashCode := hashFunc(b)
+
 		rw.RLock()
 		index, ok := m[hashCode]
 		rw.RUnlock()
 
-		if !ok {
-			rw.Lock()
-			m[hashCode], index = n, n
-			n++
-			rw.Unlock()
+		if ok {
 			return index
 		}
+
+		rw.Lock()
+		defer rw.Unlock()
+
+		index, ok = m[hashCode]
+		if ok {
+			return index
+		}
+
+		m[hashCode], index = n, n
+		n++
 
 		return index
 	}

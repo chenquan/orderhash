@@ -28,13 +28,20 @@ func Hash32(hashFunc func(b []byte) uint32) func(b []byte) uint32 {
 		index, ok := m[hashCode]
 		rw.RUnlock()
 
-		if !ok {
-			rw.Lock()
-			m[hashCode], index = n, n
-			n++
-			rw.Unlock()
+		if ok {
 			return index
 		}
+
+		rw.Lock()
+		defer rw.Unlock()
+
+		index, ok = m[hashCode]
+		if ok {
+			return index
+		}
+
+		m[hashCode], index = n, n
+		n++
 
 		return index
 	}
