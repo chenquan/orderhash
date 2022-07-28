@@ -12,30 +12,30 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package hash64
+package orderhash
 
 import (
-	"hash/crc32"
-	"math/rand"
-	"strconv"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"sync"
 )
 
-func TestHash_Sum(t *testing.T) {
-	hash := New(func(b []byte) uint64 {
-		return uint64(crc32.ChecksumIEEE(b))
-	})
+func Hash64(hashFunc func(b []byte) uint64) func(b []byte) uint64 {
+	n := uint64(0)
+	m := make(map[uint64]uint64, 16)
+	rw := &sync.RWMutex{}
+	return func(b []byte) uint64 {
+		hashCode := hashFunc(b)
+		rw.RLock()
+		index, ok := m[hashCode]
+		rw.RUnlock()
 
-	n := rand.Int()
-	for i := 0; i < 10000; i++ {
-		index := hash.Sum([]byte(strconv.Itoa(i) + "@" + strconv.Itoa(n)))
-		assert.EqualValues(t, i, index)
-	}
+		if !ok {
+			rw.Lock()
+			m[hashCode], index = n, n
+			n++
+			rw.Unlock()
+			return index
+		}
 
-	for i := 0; i < 10000; i++ {
-		index := hash.Sum([]byte(strconv.Itoa(i) + "@" + strconv.Itoa(n)))
-		assert.EqualValues(t, i, index)
+		return index
 	}
 }

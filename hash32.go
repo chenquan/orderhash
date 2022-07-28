@@ -12,34 +12,30 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package hash64
+package orderhash
 
 import (
 	"sync"
-	"sync/atomic"
 )
 
-type Hash struct {
-	hashFunc func(b []byte) uint64
-	m        *sync.Map
-	n        uint64
-}
+func Hash32(hashFunc func(b []byte) uint32) func(b []byte) uint32 {
+	n := uint32(0)
+	m := make(map[uint32]uint32, 16)
+	rw := &sync.RWMutex{}
+	return func(b []byte) uint32 {
+		hashCode := hashFunc(b)
+		rw.RLock()
+		index, ok := m[hashCode]
+		rw.RUnlock()
 
-func New(hashFunc func(b []byte) uint64) *Hash {
-	return &Hash{
-		hashFunc: hashFunc,
-		m:        &sync.Map{},
-	}
-}
+		if !ok {
+			rw.Lock()
+			m[hashCode], index = n, n
+			n++
+			rw.Unlock()
+			return index
+		}
 
-func (h *Hash) Sum(b []byte) (index uint64) {
-	hashCode := h.hashFunc(b)
-	indexVal, ok := h.m.Load(hashCode)
-	if !ok {
-		index = atomic.AddUint64(&h.n, 1) - 1
-		h.m.Store(hashCode, index)
 		return index
 	}
-
-	return indexVal.(uint64)
 }

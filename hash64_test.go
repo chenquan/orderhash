@@ -12,28 +12,48 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package hash32
+package orderhash
 
 import (
 	"hash/crc32"
-	"math/rand"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHash_Sum(t *testing.T) {
-	hash := New(crc32.ChecksumIEEE)
+func TestHash64(t *testing.T) {
+	f := Hash64(func(b []byte) uint64 {
+		return uint64(crc32.ChecksumIEEE(b))
+	})
 
-	n := rand.Int()
-	for i := 0; i < 10000; i++ {
-		index := hash.Sum([]byte(strconv.Itoa(i) + "@" + strconv.Itoa(n)))
-		assert.EqualValues(t, i, index)
+	N := 10000
+	group := sync.WaitGroup{}
+	m := sync.Map{}
+	for i := 0; i < N; i++ {
+		i := i
+		group.Add(1)
+		go func() {
+			defer group.Done()
+			code := f([]byte(strconv.Itoa(i)))
+			_, ok := m.Load(i)
+			assert.False(t, ok)
+			m.Store(code, i)
+		}()
 	}
+	group.Wait()
 
-	for i := 0; i < 10000; i++ {
-		index := hash.Sum([]byte(strconv.Itoa(i) + "@" + strconv.Itoa(n)))
-		assert.EqualValues(t, i, index)
+	for i := 0; i < N; i++ {
+		i := i
+		group.Add(1)
+		go func() {
+			defer group.Done()
+			code := f([]byte(strconv.Itoa(i)))
+			v, ok := m.Load(code)
+			assert.True(t, ok)
+			assert.EqualValues(t, v, i)
+		}()
 	}
+	group.Wait()
 }
