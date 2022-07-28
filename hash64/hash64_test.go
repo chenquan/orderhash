@@ -16,27 +16,26 @@ package hash64
 
 import (
 	"hash/crc32"
+	"math/rand"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHash_Index(t *testing.T) {
+func TestHash_Sum(t *testing.T) {
 	hash := New(func(b []byte) uint64 {
 		return uint64(crc32.ChecksumIEEE(b))
 	})
 
-	index := hash.Sum([]byte("1"))
-	assert.EqualValues(t, 0, index)
-	index = hash.Sum([]byte("1"))
-	assert.EqualValues(t, 0, index)
+	n := rand.Int()
+	for i := 0; i < 10000; i++ {
+		index := hash.Sum([]byte(strconv.Itoa(i) + "@" + strconv.Itoa(n)))
+		assert.EqualValues(t, i, index)
+	}
 
-	index = hash.Sum([]byte("2"))
-	assert.EqualValues(t, 1, index)
-
-	index = hash.Sum([]byte("32"))
-	assert.EqualValues(t, 2, index)
-
-	index = hash.Sum([]byte("2"))
-	assert.EqualValues(t, 1, index)
+	for i := 0; i < 10000; i++ {
+		index := hash.Sum([]byte(strconv.Itoa(i) + "@" + strconv.Itoa(n)))
+		assert.EqualValues(t, i, index)
+	}
 }
