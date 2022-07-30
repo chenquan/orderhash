@@ -38,8 +38,6 @@ func TestHash64(t *testing.T) {
 			go func() {
 				defer group.Done()
 				code := f([]byte(strconv.Itoa(i)))
-				_, ok := m.Load(i)
-				assert.False(t, ok)
 				m.Store(code, i)
 			}()
 		}
