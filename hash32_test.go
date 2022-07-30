@@ -30,14 +30,14 @@ func TestHash32(t *testing.T) {
 	m := sync.Map{}
 	for i := 0; i < N; i++ {
 		i := i
-		group.Add(1)
-		go func() {
-			defer group.Done()
-			code := f([]byte(strconv.Itoa(i)))
-			_, ok := m.Load(i)
-			assert.False(t, ok)
-			m.Store(code, i)
-		}()
+		for j := 0; j < 100; j++ {
+			group.Add(1)
+			go func() {
+				defer group.Done()
+				code := f([]byte(strconv.Itoa(i)))
+				m.Store(code, i)
+			}()
+		}
 	}
 	group.Wait()
 
