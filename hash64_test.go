@@ -28,16 +28,20 @@ func TestHash64(t *testing.T) {
 		return uint64(crc32.ChecksumIEEE(b))
 	})
 
-	N := 10000
+	N := 100
 	group := sync.WaitGroup{}
 	m := sync.Map{}
 	for i := 0; i < N; i++ {
 		i := i
-		for j := 0; j < 100; j++ {
+		for j := 0; j < 10; j++ {
 			group.Add(1)
 			go func() {
 				defer group.Done()
 				code := f([]byte(strconv.Itoa(i)))
+				value, ok := m.Load(code)
+				if ok {
+					assert.EqualValues(t, i, value)
+				}
 				m.Store(code, i)
 			}()
 		}
