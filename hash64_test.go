@@ -41,8 +41,9 @@ func TestHash64(t *testing.T) {
 				value, ok := m.Load(code)
 				if ok {
 					assert.EqualValues(t, i, value)
+				} else {
+					m.Store(code, i)
 				}
-				m.Store(code, i)
 			}()
 		}
 	}
