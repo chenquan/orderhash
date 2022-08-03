@@ -30,7 +30,7 @@ func TestHash32(t *testing.T) {
 	m := sync.Map{}
 	for i := 0; i < N; i++ {
 		i := i
-		for j := 0; j < 10; j++ {
+		for j := 0; j < 80; j++ {
 			group.Add(1)
 			go func() {
 				defer group.Done()
