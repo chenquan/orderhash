@@ -22,4 +22,6 @@ go get -u github.com/chenquan/orderhash
 
 ## purpose
 
-It is used to guarantee the order of concurrent consumer and producer messages and to provide concurrent throughput capability.
+It is used to ensure the order of consumer and producer message consumption and sending during concurrency, and improve the concurrent throughput.
+
+example: https://github.com/chenquan/go-queue/blob/master/kafka
