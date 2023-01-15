@@ -54,7 +54,6 @@ func (h *Hash64) Hash(b []byte) uint64 {
 	h.value.Store(mm)
 
 	return index
-
 }
 
 func (h *Hash64) atomicLoad() map[uint64]uint64 {
