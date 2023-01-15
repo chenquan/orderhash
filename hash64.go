@@ -19,38 +19,49 @@ import (
 	"sync/atomic"
 )
 
-func Hash64(hashFunc func(b []byte) uint64) func(b []byte) uint64 {
-	n := uint64(0)
-	mu := &sync.Mutex{}
-	value := &atomic.Value{}
-	value.Store(make(map[uint64]uint64, 16))
-	return func(b []byte) uint64 {
-		hashCode := hashFunc(b)
+type Hash64 struct {
+	n        uint64
+	mu       sync.Mutex
+	value    atomic.Value
+	HashFunc func(b []byte) uint64
+}
 
-		m := value.Load().(map[uint64]uint64)
-		index, ok := m[hashCode]
-		if ok {
-			return index
-		}
+func (h *Hash64) Hash(b []byte) uint64 {
+	hashCode := h.HashFunc(b)
 
-		mu.Lock()
-		defer mu.Unlock()
-
-		m = value.Load().(map[uint64]uint64)
-		index, ok = m[hashCode]
-		if ok {
-			return index
-		}
-
-		mm := make(map[uint64]uint64, len(m))
-		for k, v := range m {
-			mm[k] = v
-		}
-
-		mm[hashCode], index = n, n
-		n++
-		value.Store(mm)
-
+	m := h.atomicLoad()
+	index, ok := m[hashCode]
+	if ok {
 		return index
 	}
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	m = h.atomicLoad()
+	index, ok = m[hashCode]
+	if ok {
+		return index
+	}
+
+	mm := make(map[uint64]uint64, len(m))
+	for k, v := range m {
+		mm[k] = v
+	}
+
+	mm[hashCode], index = h.n, h.n
+	h.n++
+	h.value.Store(mm)
+
+	return index
+
+}
+
+func (h *Hash64) atomicLoad() map[uint64]uint64 {
+	m := h.value.Load()
+	if m != nil {
+		return m.(map[uint64]uint64)
+	}
+
+	return map[uint64]uint64{}
 }

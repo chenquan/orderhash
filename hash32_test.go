@@ -24,7 +24,7 @@ import (
 )
 
 func TestHash32(t *testing.T) {
-	f := Hash32(crc32.ChecksumIEEE)
+	f := Hash32{HashFunc: crc32.ChecksumIEEE}
 	N := 100
 	group := sync.WaitGroup{}
 	m := sync.Map{}
@@ -34,7 +34,7 @@ func TestHash32(t *testing.T) {
 			group.Add(1)
 			go func() {
 				defer group.Done()
-				code := f([]byte(strconv.Itoa(i) + "xxxx"))
+				code := f.Hash([]byte(strconv.Itoa(i) + "xxxx"))
 				value, ok := m.Load(code)
 				if ok {
 					assert.EqualValues(t, i, value)
@@ -51,7 +51,7 @@ func TestHash32(t *testing.T) {
 		group.Add(1)
 		go func() {
 			defer group.Done()
-			code := f([]byte(strconv.Itoa(i) + "xxxx"))
+			code := f.Hash([]byte(strconv.Itoa(i) + "xxxx"))
 			v, ok := m.Load(code)
 			assert.True(t, ok)
 			assert.EqualValues(t, v, i)

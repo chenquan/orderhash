@@ -24,9 +24,9 @@ import (
 )
 
 func TestHash64(t *testing.T) {
-	f := Hash64(func(b []byte) uint64 {
+	f := Hash64{HashFunc: func(b []byte) uint64 {
 		return uint64(crc32.ChecksumIEEE(b))
-	})
+	}}
 
 	N := 100
 	group := sync.WaitGroup{}
@@ -37,7 +37,7 @@ func TestHash64(t *testing.T) {
 			group.Add(1)
 			go func() {
 				defer group.Done()
-				code := f([]byte(strconv.Itoa(i) + "xxxx"))
+				code := f.Hash([]byte(strconv.Itoa(i) + "xxxx"))
 				value, ok := m.Load(code)
 				if ok {
 					assert.EqualValues(t, i, value)
@@ -54,7 +54,7 @@ func TestHash64(t *testing.T) {
 		group.Add(1)
 		go func() {
 			defer group.Done()
-			code := f([]byte(strconv.Itoa(i) + "xxxx"))
+			code := f.Hash([]byte(strconv.Itoa(i) + "xxxx"))
 			v, ok := m.Load(code)
 			assert.True(t, ok)
 			assert.EqualValues(t, v, i)
