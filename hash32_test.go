@@ -34,7 +34,7 @@ func TestHash32(t *testing.T) {
 			group.Add(1)
 			go func() {
 				defer group.Done()
-				code := f([]byte(strconv.Itoa(i)))
+				code := f([]byte(strconv.Itoa(i) + "xxxx"))
 				value, ok := m.Load(code)
 				if ok {
 					assert.EqualValues(t, i, value)
@@ -51,7 +51,7 @@ func TestHash32(t *testing.T) {
 		group.Add(1)
 		go func() {
 			defer group.Done()
-			code := f([]byte(strconv.Itoa(i)))
+			code := f([]byte(strconv.Itoa(i) + "xxxx"))
 			v, ok := m.Load(code)
 			assert.True(t, ok)
 			assert.EqualValues(t, v, i)

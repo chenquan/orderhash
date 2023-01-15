@@ -16,32 +16,40 @@ package orderhash
 
 import (
 	"sync"
+	"sync/atomic"
 )
 
 func Hash32(hashFunc func(b []byte) uint32) func(b []byte) uint32 {
 	n := uint32(0)
-	m := make(map[uint32]uint32, 16)
-	rw := &sync.RWMutex{}
+	mu := &sync.Mutex{}
+	value := &atomic.Value{}
+	value.Store(make(map[uint32]uint32, 16))
 	return func(b []byte) uint32 {
 		hashCode := hashFunc(b)
-		rw.RLock()
-		index, ok := m[hashCode]
-		rw.RUnlock()
 
+		m := value.Load().(map[uint32]uint32)
+		index, ok := m[hashCode]
 		if ok {
 			return index
 		}
 
-		rw.Lock()
-		defer rw.Unlock()
+		mu.Lock()
+		defer mu.Unlock()
 
+		m = value.Load().(map[uint32]uint32)
 		index, ok = m[hashCode]
 		if ok {
 			return index
 		}
 
-		m[hashCode], index = n, n
+		mm := make(map[uint32]uint32, len(m))
+		for k, v := range m {
+			mm[k] = v
+		}
+
+		mm[hashCode], index = n, n
 		n++
+		value.Store(mm)
 
 		return index
 	}
